@@ -17,12 +17,13 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path
-from file_upload.views import AudioFileUploadView
+from file_upload.views import AudioFileUploadView, AudioFileStatusView
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('upload/audio/', AudioFileUploadView.as_view(), name='audio-upload'),
+    path('status/<int:file_id>/', AudioFileStatusView.as_view(), name='audio-file-status'),
 ]
 
 

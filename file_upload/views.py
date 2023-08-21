@@ -9,6 +9,8 @@ import whisper
 
 
 
+from .tasks import process_audio_task
+
 class AudioFileUploadView(APIView):
     parser_class = (FileUploadParser,)
 
@@ -16,29 +18,26 @@ class AudioFileUploadView(APIView):
         audio_file_serializer = UploadedFileSerializer(data=request.data)
         if audio_file_serializer.is_valid():
             audio_file_serializer.save()
-            print(audio_file_serializer.data)
 
-            # Process the audio file using "whisper" module and get the text result
+            # Process the audio file asynchronously using Celery
             audio_file_path = audio_file_serializer.data['audio_file']
-            text_result = self.process_audio(audio_file_path)
-
-            # Update the 'text_result' field in the database
-            UploadedFile.objects.filter(id=audio_file_serializer.data['id']).update(text_result=text_result)
-
-            # Get the updated object from the database
-            updated_file = UploadedFile.objects.get(id=audio_file_serializer.data['id'])
-
-            # Serialize the updated object
-            audio_file_serializer = UploadedFileSerializer(instance=updated_file)
+            file_id = audio_file_serializer.data['id']
+            process_audio_task.delay(audio_file_path, file_id)
 
             return Response(audio_file_serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(audio_file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-    def process_audio(self, audio_file_path):
-        model = whisper.load_model("base")
-        result = model.transcribe(audio_file_path[1:], fp16=False)
-        text_result = result["text"]
-
-        return text_result
+class AudioFileStatusView(APIView):
+    def get(self, request, *args, **kwargs):
+        file_id = kwargs['file_id']
+        try:
+            uploaded_file = UploadedFile.objects.get(pk=file_id)
+            if uploaded_file.text_result:
+                # Якщо результат обробки доступний, повертаємо текст
+                return Response({'status': 'processed', 'text_result': uploaded_file.text_result})
+            else:
+                # Якщо результат обробки ще не готовий, повертаємо статус "processing"
+                return Response({'status': 'processing'})
+        except UploadedFile.DoesNotExist:
+            return Response({'status': 'not_found'}, status=status.HTTP_404_NOT_FOUND)

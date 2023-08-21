@@ -2,7 +2,6 @@
 import os
 from celery import Celery
 
-
 # Встановіть змінну середовища "DJANGO_SETTINGS_MODULE" для вказання Django на налаштування вашого проекту
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'dj_rest.settings')
 

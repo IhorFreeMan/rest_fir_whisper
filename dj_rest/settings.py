@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 from pathlib import Path
 
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -39,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'file_upload',
+    # 'celery',
 ]
 
 MIDDLEWARE = [
@@ -125,3 +128,22 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+
+# Рядок підключення до Redis
+# CELERY_BROKER_URL = 'redis://localhost:6379/0'
+
+# Додайте брокер, який ви використовуєте (наприклад, Redis)
+BROKER_URL = 'redis://localhost:6379/0'
+
+# Додайте рядок для автоматичного визначення завдань в кожному Django-проекті
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+
+# Налаштування, які дозволять Celery відслідковувати стан завдань
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60  # Максимальний час виконання завдання (30 хвилин)
+
+# Опціонально: додайте шлях до файлу з завданнями Celery, якщо ви хочете його розділити з проектом Django
+# CELERY_IMPORTS = ('dj_rest.tasks',)
